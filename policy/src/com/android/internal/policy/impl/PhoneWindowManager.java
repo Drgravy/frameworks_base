@@ -76,6 +76,8 @@ import com.android.internal.statusbar.IStatusBarService;
 import com.android.internal.telephony.ITelephony;
 import com.android.internal.widget.PointerLocationView;
 
+import dalvik.system.DexClassLoader;
+
 import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.Log;
@@ -259,6 +261,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     private DeviceKeyHandler mDeviceKeyHandler;
+    DeviceKeyHandler mDeviceKeyHandler;
 
     /**
      * Lock protecting internal state.  Must not call out into window
@@ -1202,6 +1205,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         String deviceKeyHandlerLib = mContext.getResources().getString(
                 com.android.internal.R.string.config_deviceHandlersLib);
+                com.android.internal.R.string.config_deviceKeyHandlerLib);
 
         String deviceKeyHandlerClass = mContext.getResources().getString(
                 com.android.internal.R.string.config_deviceKeyHandlerClass);
@@ -1216,9 +1220,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 Constructor<?> constructor = klass.getConstructor(Context.class);
                 mDeviceKeyHandler = (DeviceKeyHandler) constructor.newInstance(
                         mContext);
-                if(DEBUG) Slog.d(TAG, "Device key handler loaded");
+                Slog.d(TAG, "Device key handler loaded");
             } catch (Exception e) {
-                Slog.w(TAG, "Could not instantiate device key handler "
+                Slog.d(TAG, "Could not instantiate device key handler "
                         + deviceKeyHandlerClass + " from class "
                         + deviceKeyHandlerLib, e);
             }
@@ -2697,15 +2701,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return -1;
         }
 
-        // Specific device key handling
         if (mDeviceKeyHandler != null) {
             try {
-                // The device only should consume known keys.
-                if (mDeviceKeyHandler.handleKeyEvent(event)) {
-                    return -1;
-                }
+                return mDeviceKeyHandler.handleKeyEvent(event);
             } catch (Exception e) {
-                Slog.w(TAG, "Could not dispatch event to device key handler", e);
+                Slog.d(TAG, "Could not dispatch event to device key handler", e);
             }
         }
 
